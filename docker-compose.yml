@@ -1,0 +1,189 @@
+version: '3.8'
+
+networks:
+  lab-network:
+    driver: bridge
+
+services:
+  # ----------------------------------------------------
+  # MANAGEMENT & MONITORING
+  # ----------------------------------------------------
+  dashboard:
+    build: ./dashboard
+    container_name: lab_dashboard
+    ports:
+      - "3000:3000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./docker-compose.yml:/usr/src/app/docker-compose.yml
+      - ./load-tests:/usr/src/app/load-tests
+    networks:
+      - lab-network
+    restart: unless-stopped
+    # We do not give it the lab-module label so it doesn't manage itself
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: lab_prometheus
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - lab-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: lab_grafana
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+    networks:
+      - lab-network
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+
+  # ----------------------------------------------------
+  # LOAD TESTING TARGET
+  # ----------------------------------------------------
+  target-app:
+    build: ./target-app
+    container_name: lab_target_app
+    ports:
+      - "4000:3000"
+    environment:
+      - RATE_LIMIT_ENABLED=true
+    labels:
+      - "lab-module=true"
+      - "lab.name=Target-App"
+      - "lab.category=API"
+      - "lab.difficulty=Easy"
+      - "lab.description=A mock API for load testing. Supports toggling rate limits."
+      - "lab.url=http://localhost:4000"
+    networks:
+      - lab-network
+    restart: unless-stopped
+
+  waf:
+    image: owasp/modsecurity-crs:apache
+    container_name: lab_waf
+    ports:
+      - "3008:80"
+    environment:
+      - BACKEND=http://target-app:3000
+    labels:
+      - "lab-module=true"
+      - "lab.name=ModSecurity-WAF"
+      - "lab.category=WAF"
+      - "lab.difficulty=Hard"
+      - "lab.description=OWASP ModSecurity Core Rule Set protecting the Target App."
+      - "lab.url=http://localhost:3008"
+    networks:
+      - lab-network
+    restart: unless-stopped
+
+  # ----------------------------------------------------
+  # VULNERABLE WEB APPS (Pen-Test Targets)
+  # ----------------------------------------------------
+  juice-shop:
+    image: bkimminich/juice-shop
+    container_name: lab_juice_shop
+    ports:
+      - "3002:3000"
+    labels:
+      - "lab-module=true"
+      - "lab.name=Juice-Shop"
+      - "lab.category=Web"
+      - "lab.difficulty=Medium"
+      - "lab.description=OWASP Juice Shop: Probably the most modern and sophisticated insecure web application."
+      - "lab.url=http://localhost:3002"
+    networks:
+      - lab-network
+    restart: unless-stopped
+
+  dvwa:
+    image: vulnerables/web-dvwa
+    container_name: lab_dvwa
+    ports:
+      - "3003:80"
+    labels:
+      - "lab-module=true"
+      - "lab.name=DVWA"
+      - "lab.category=Web"
+      - "lab.difficulty=Easy"
+      - "lab.description=Damn Vulnerable Web App (DVWA): A PHP/MySQL web application that is damn vulnerable."
+      - "lab.url=http://localhost:3003"
+    networks:
+      - lab-network
+    restart: unless-stopped
+
+  webgoat:
+    image: webgoat/webgoat
+    container_name: lab_webgoat
+    ports:
+      - "3004:8080"
+    labels:
+      - "lab-module=true"
+      - "lab.name=WebGoat"
+      - "lab.category=Web"
+      - "lab.difficulty=Hard"
+      - "lab.description=OWASP WebGoat: A deliberately insecure application that allows developers to test vulnerabilities."
+      - "lab.url=http://localhost:3004/WebGoat"
+    networks:
+      - lab-network
+    restart: unless-stopped
+
+  vampi:
+    image: erev0s/vampi
+    container_name: lab_vampi
+    ports:
+      - "3005:5000"
+    labels:
+      - "lab-module=true"
+      - "lab.name=VAmPI"
+      - "lab.category=API"
+      - "lab.difficulty=Medium"
+      - "lab.description=Vulnerable API (VAmPI) to practice OWASP API Top 10 vulnerabilities."
+      - "lab.url=http://localhost:3005"
+    networks:
+      - lab-network
+    restart: unless-stopped
+
+  metasploitable2:
+    image: tleemcjr/metasploitable2
+    container_name: lab_metasploitable2
+    ports:
+      - "3006:80"
+    labels:
+      - "lab-module=true"
+      - "lab.name=Metasploitable2"
+      - "lab.category=Network"
+      - "lab.difficulty=Medium"
+      - "lab.description=Metasploitable 2 is a Linux environment with many vulnerable services."
+      - "lab.url=http://localhost:3006"
+    networks:
+      - lab-network
+    restart: unless-stopped
+
+  ssrf-lab:
+    build: ./ssrf-lab
+    container_name: lab_ssrf
+    ports:
+      - "3007:3000"
+    labels:
+      - "lab-module=true"
+      - "lab.name=SSRF-Cloud"
+      - "lab.category=Cloud"
+      - "lab.difficulty=Easy"
+      - "lab.description=Practice Server-Side Request Forgery and Cloud Metadata extraction."
+      - "lab.url=http://localhost:3007"
+    networks:
+      - lab-network
+    restart: unless-stopped

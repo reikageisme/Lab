@@ -1,0 +1,14 @@
+{
+  "name": "target-app",
+  "version": "1.0.0",
+  "description": "Mock API for load testing",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.3.1",
+    "prom-client": "^15.1.2"
+  }
+}

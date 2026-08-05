@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pentest Lab Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: '#0f172a',
+                        card: '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .loader {
+            border: 3px solid #334155;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Custom scrollbar for iframe and history */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-dark text-slate-200 min-h-screen font-sans antialiased">
+
+    <!-- LOGIN OVERLAY -->
+    <div id="login-overlay" class="fixed inset-0 bg-dark z-[100] flex flex-col items-center justify-center p-4">
+        <div class="bg-card p-8 rounded-xl shadow-2xl border border-slate-700 w-full max-w-md">
+            <h2 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400 mb-6 text-center">Lab Gateway</h2>
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="mb-4">
+                    <label class="block text-sm text-slate-400 mb-2">Username</label>
+                    <input type="text" id="username" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500" required>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm text-slate-400 mb-2">Password</label>
+                    <input type="password" id="password" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500" required>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg transition shadow-lg shadow-blue-900/20">Login</button>
+                <p id="login-error" class="text-rose-500 text-sm mt-4 text-center hidden">Invalid credentials</p>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD -->
+    <div id="main-content" class="hidden h-screen flex flex-col overflow-hidden">
+        <!-- TOP NAV -->
+        <header class="bg-card border-b border-slate-700 px-6 py-4 flex justify-between items-center shrink-0">
+            <div>
+                <h1 class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400 tracking-tight">Lab Gateway</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <button onclick="downloadReport()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition shadow flex items-center gap-2 text-sm font-medium">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Export Report
+                </button>
+                <button onclick="handleLogout()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition text-sm font-medium">Logout</button>
+            </div>
+        </header>
+
+        <!-- TABS NAV -->
+        <div class="bg-slate-800/50 border-b border-slate-700 px-6 flex gap-6 shrink-0">
+            <button onclick="switchTab('modules')" id="tab-modules" class="px-4 py-3 border-b-2 border-blue-500 text-blue-400 font-medium">Lab Modules</button>
+            <button onclick="switchTab('monitoring')" id="tab-monitoring" class="px-4 py-3 border-b-2 border-transparent text-slate-400 hover:text-slate-200 font-medium">Monitoring</button>
+            <button onclick="switchTab('history')" id="tab-history" class="px-4 py-3 border-b-2 border-transparent text-slate-400 hover:text-slate-200 font-medium">History</button>
+        </div>
+
+        <!-- MAIN VIEW AREA -->
+        <div class="flex-1 overflow-auto p-6">
+            
+            <!-- MODULES TAB -->
+            <div id="view-modules" class="max-w-7xl mx-auto h-full">
+                <!-- Filters -->
+                <div class="flex gap-4 mb-6">
+                    <select id="filter-category" onchange="applyFilters()" class="bg-slate-800 border border-slate-700 text-sm rounded-lg px-3 py-2 text-white">
+                        <option value="">All Categories</option>
+                        <option value="Web">Web</option>
+                        <option value="API">API</option>
+                        <option value="Network">Network</option>
+                        <option value="Cloud">Cloud</option>
+                        <option value="WAF">WAF</option>
+                    </select>
+                    <select id="filter-difficulty" onchange="applyFilters()" class="bg-slate-800 border border-slate-700 text-sm rounded-lg px-3 py-2 text-white">
+                        <option value="">All Difficulties</option>
+                        <option value="Easy">Easy</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Hard">Hard</option>
+                    </select>
+                    <button onclick="fetchContainers()" class="ml-auto px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition text-sm flex items-center gap-2">
+                        Refresh
+                    </button>
+                </div>
+
+                <div id="loading" class="flex justify-center my-12 hidden">
+                    <div class="loader"></div>
+                </div>
+
+                <div id="containers-grid" class="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
+                    <!-- Cards injected here -->
+                </div>
+            </div>
+
+            <!-- MONITORING TAB -->
+            <div id="view-monitoring" class="hidden h-full w-full bg-slate-900 rounded-xl overflow-hidden border border-slate-700">
+                <iframe src="http://localhost:3001/d/load-test-dashboard?orgId=1&kiosk" class="w-full h-full border-none"></iframe>
+            </div>
+
+            <!-- HISTORY TAB -->
+            <div id="view-history" class="hidden max-w-4xl mx-auto">
+                <div class="bg-card rounded-xl border border-slate-700 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center">
+                        <h2 class="text-lg font-bold">Activity Log</h2>
+                        <button onclick="fetchHistory()" class="text-sm text-blue-400 hover:text-blue-300">Refresh</button>
+                    </div>
+                    <div class="p-0">
+                        <ul id="history-list" class="divide-y divide-slate-700">
+                            <li class="px-6 py-4 text-slate-500 text-center">Loading history...</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Logs Modal -->
+    <div id="logs-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-[60] flex items-center justify-center p-4">
+        <div class="bg-card w-full max-w-4xl rounded-xl shadow-2xl border border-slate-700 overflow-hidden flex flex-col h-[80vh]">
+            <div class="px-6 py-4 border-b border-slate-700 flex justify-between items-center bg-slate-800/50">
+                <h3 class="text-lg font-bold text-slate-200">Logs: <span id="modal-container-name" class="text-blue-400"></span></h3>
+                <button onclick="closeLogs()" class="text-slate-400 hover:text-white transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="flex-1 p-4 overflow-auto bg-[#0a0f18]">
+                <pre id="modal-logs-content" class="text-xs font-mono text-emerald-400 whitespace-pre-wrap"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/containers';
+        let allContainers = [];
+        let statsInterval = null;
+
+        // --- AUTH ---
+        async function checkAuth() {
+            try {
+                const res = await fetch('/api/me');
+                if (res.ok) {
+                    document.getElementById('login-overlay').classList.add('hidden');
+                    document.getElementById('main-content').classList.remove('hidden');
+                    fetchContainers();
+                    startStatsPolling();
+                } else {
+                    showLogin();
+                }
+            } catch(e) {
+                showLogin();
+            }
+        }
+
+        function showLogin() {
+            document.getElementById('login-overlay').classList.remove('hidden');
+            document.getElementById('main-content').classList.add('hidden');
+            stopStatsPolling();
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username: u, password: p})
+                });
+                if (res.ok) {
+                    checkAuth();
+                } else {
+                    document.getElementById('login-error').classList.remove('hidden');
+                }
+            } catch(e) {
+                alert('Login failed');
+            }
+        }
+
+        async function handleLogout() {
+            await fetch('/api/logout', { method: 'POST' });
+            checkAuth();
+        }
+
+        // --- TABS ---
+        function switchTab(tab) {
+            ['modules', 'monitoring', 'history'].forEach(t => {
+                document.getElementById(`view-${t}`).classList.add('hidden');
+                document.getElementById(`tab-${t}`).classList.remove('border-blue-500', 'text-blue-400');
+                document.getElementById(`tab-${t}`).classList.add('border-transparent', 'text-slate-400');
+            });
+            document.getElementById(`view-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).classList.add('border-blue-500', 'text-blue-400');
+            document.getElementById(`tab-${tab}`).classList.remove('border-transparent', 'text-slate-400');
+
+            if (tab === 'history') fetchHistory();
+        }
+
+        // --- LAB MODULES ---
+        async function fetchContainers() {
+            document.getElementById('loading').classList.remove('hidden');
+            try {
+                const res = await fetch(API_BASE);
+                if (res.status === 401) return checkAuth();
+                allContainers = await res.json();
+                applyFilters();
+            } catch (err) {
+                console.error(err);
+            } finally {
+                document.getElementById('loading').classList.add('hidden');
+            }
+        }
+
+        function getDifficultyColor(diff) {
+            if (diff === 'Easy') return 'bg-emerald-900/50 text-emerald-400 border-emerald-700';
+            if (diff === 'Medium') return 'bg-amber-900/50 text-amber-400 border-amber-700';
+            if (diff === 'Hard') return 'bg-rose-900/50 text-rose-400 border-rose-700';
+            return 'bg-slate-800 text-slate-300 border-slate-700';
+        }
+
+        function applyFilters() {
+            const cat = document.getElementById('filter-category').value;
+            const diff = document.getElementById('filter-difficulty').value;
+            
+            const filtered = allContainers.filter(c => {
+                const cCat = c.labels['lab.category'] || '';
+                const cDiff = c.labels['lab.difficulty'] || '';
+                if (cat && cCat !== cat) return false;
+                if (diff && cDiff !== diff) return false;
+                return true;
+            });
+            
+            renderContainers(filtered);
+        }
+
+        function renderContainers(containers) {
+            const grid = document.getElementById('containers-grid');
+            grid.innerHTML = '';
+            
+            if (containers.length === 0) {
+                grid.innerHTML = '<div class="col-span-full text-center text-slate-500 py-12">No lab modules matched filters.</div>';
+                return;
+            }
+
+            containers.forEach(c => {
+                const isRunning = c.state === 'running';
+                const statusColor = isRunning ? 'bg-emerald-500' : 'bg-slate-500';
+                
+                const cat = c.labels['lab.category'] || 'Uncategorized';
+                const diff = c.labels['lab.difficulty'] || 'Unknown';
+                const name = c.labels['lab.name'] || c.name;
+                
+                let appLink = '';
+                if (c.labels['lab.url']) {
+                    appLink = `<a href="${c.labels['lab.url']}" target="_blank" class="flex-1 text-center px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition text-xs font-medium ${!isRunning ? 'opacity-50 pointer-events-none' : ''}">Open App</a>`;
+                }
+
+                // Load Test block if Target App
+                let loadTestHtml = '';
+                if (name === 'Target-App') {
+                    loadTestHtml = `
+                        <div class="mt-4 pt-4 border-t border-slate-700">
+                            <h4 class="text-xs font-bold text-slate-400 mb-2 uppercase">Load Testing</h4>
+                            <div class="flex gap-2">
+                                <select id="lt-scenario" class="bg-slate-800 border border-slate-600 text-xs rounded px-2 py-1 text-white flex-1">
+                                    <option value="ramp-up">Ramp-Up</option>
+                                    <option value="spike">Spike</option>
+                                    <option value="sustained">Sustained</option>
+                                </select>
+                                <button onclick="runLoadTest()" class="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded transition">RUN TEST</button>
+                            </div>
+                            <div id="lt-result" class="mt-2 text-xs font-mono text-emerald-400 hidden bg-slate-900 p-2 rounded"></div>
+                        </div>
+                    `;
+                }
+                
+                const card = document.createElement('div');
+                card.className = 'bg-card rounded-xl border border-slate-700/50 p-5 shadow-xl flex flex-col relative overflow-hidden';
+                
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full ${statusColor}"></span>
+                            ${name}
+                        </h3>
+                        <div class="flex gap-1">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded border bg-slate-800 text-slate-300 border-slate-700">${cat}</span>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded border ${getDifficultyColor(diff)}">${diff}</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-400 mb-4 flex-1">${c.labels['lab.description'] || 'No description available.'}</p>
+                    
+                    <!-- Stats Area -->
+                    <div class="grid grid-cols-2 gap-2 mb-4 bg-slate-800/50 p-2 rounded-lg border border-slate-700/50">
+                        <div class="text-[10px] text-slate-400">CPU: <span id="cpu-${c.id}" class="text-slate-200 font-mono font-bold">${isRunning ? '...' : '-'}</span></div>
+                        <div class="text-[10px] text-slate-400">RAM: <span id="ram-${c.id}" class="text-slate-200 font-mono font-bold">${isRunning ? '...' : '-'}</span></div>
+                    </div>
+
+                    <div class="flex gap-2 mt-auto">
+                        <button onclick="toggleContainer('${c.id}', ${isRunning})" class="flex-1 px-3 py-2 rounded-lg text-xs font-medium transition ${isRunning ? 'bg-rose-900/50 hover:bg-rose-600 text-rose-200 hover:text-white' : 'bg-emerald-900/50 hover:bg-emerald-600 text-emerald-200 hover:text-white'}">
+                            ${isRunning ? 'Stop' : 'Start'}
+                        </button>
+                        ${appLink}
+                        <button onclick="resetContainer('${c.name}')" class="px-3 py-2 bg-amber-900/40 hover:bg-amber-600 text-amber-200 hover:text-white rounded-lg text-xs font-medium transition" title="Reset Container & Volumes">
+                            Reset
+                        </button>
+                        <button onclick="viewLogs('${c.id}', '${name}')" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition">
+                            Logs
+                        </button>
+                    </div>
+                    ${loadTestHtml}
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        async function toggleContainer(id, isRunning) {
+            const action = isRunning ? 'stop' : 'start';
+            try {
+                await fetch(`${API_BASE}/${id}/${action}`, { method: 'POST' });
+                fetchContainers(); // Refresh status instantly
+            } catch (err) {
+                alert(`Failed to ${action} container`);
+            }
+        }
+
+        async function resetContainer(name) {
+            if(!confirm(`Are you sure you want to completely reset ${name}? All data inside its volumes will be lost.`)) return;
+            try {
+                alert('Resetting... This might take a few seconds.');
+                await fetch(`${API_BASE}/${name}/reset`, { method: 'POST' });
+                fetchContainers();
+                alert('Reset complete!');
+            } catch (err) {
+                alert(`Failed to reset container`);
+            }
+        }
+
+        async function viewLogs(id, name) {
+            const modal = document.getElementById('logs-modal');
+            const content = document.getElementById('modal-logs-content');
+            document.getElementById('modal-container-name').textContent = name;
+            content.textContent = 'Loading logs...';
+            modal.classList.remove('hidden');
+            try {
+                const res = await fetch(`${API_BASE}/${id}/logs`);
+                let logs = await res.text();
+                logs = logs.replace(/[\x00-\x08\x0B-\x1F\x7F-\x9F]/g, '');
+                content.textContent = logs || 'No logs available.';
+            } catch (err) {
+                content.textContent = 'Failed to fetch logs.';
+            }
+        }
+
+        function closeLogs() {
+            document.getElementById('logs-modal').classList.add('hidden');
+        }
+
+        // --- STATS POLLING ---
+        async function updateStats() {
+            if (document.getElementById('login-overlay').classList.contains('hidden') === false) return;
+            const running = allContainers.filter(c => c.state === 'running');
+            for (let c of running) {
+                try {
+                    const res = await fetch(`${API_BASE}/${c.id}/stats`);
+                    if (res.ok) {
+                        const stats = await res.json();
+                        const cpuEl = document.getElementById(`cpu-${c.id}`);
+                        const ramEl = document.getElementById(`ram-${c.id}`);
+                        if (cpuEl) cpuEl.textContent = `${stats.cpu}%`;
+                        if (ramEl) ramEl.textContent = `${stats.mem} MB (${stats.memPercent}%)`;
+                    }
+                } catch(e) {}
+            }
+        }
+
+        function startStatsPolling() {
+            if (statsInterval) clearInterval(statsInterval);
+            statsInterval = setInterval(updateStats, 3000);
+        }
+        function stopStatsPolling() {
+            if (statsInterval) clearInterval(statsInterval);
+        }
+
+        // --- LOAD TEST ---
+        async function runLoadTest() {
+            const scenario = document.getElementById('lt-scenario').value;
+            const resDiv = document.getElementById('lt-result');
+            resDiv.classList.remove('hidden');
+            resDiv.innerHTML = '<span class="animate-pulse">Running test... Please wait...</span>';
+            
+            try {
+                const res = await fetch('/api/loadtest/run-real', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ scenario })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    resDiv.innerHTML = `RPS: <span class="text-white">${data.rps}</span> | p95: <span class="text-white">${data.p95}</span>`;
+                } else {
+                    resDiv.innerHTML = `<span class="text-rose-500">Error: ${data.error}</span>`;
+                }
+            } catch(e) {
+                resDiv.innerHTML = '<span class="text-rose-500">Failed to connect</span>';
+            }
+        }
+
+        // --- HISTORY ---
+        async function fetchHistory() {
+            try {
+                const res = await fetch('/api/history');
+                const history = await res.json();
+                const list = document.getElementById('history-list');
+                list.innerHTML = '';
+                if(history.length === 0) {
+                    list.innerHTML = '<li class="px-6 py-4 text-slate-500 text-center">No activity yet.</li>';
+                    return;
+                }
+                history.forEach(item => {
+                    const d = new Date(item.timestamp).toLocaleString();
+                    list.innerHTML += `
+                        <li class="px-6 py-3 flex gap-4 items-start">
+                            <span class="text-xs font-mono text-slate-400 mt-1 shrink-0">${d}</span>
+                            <div>
+                                <span class="text-sm font-bold text-blue-400">[${item.action}]</span>
+                                <p class="text-sm text-slate-300 mt-0.5">${item.details}</p>
+                            </div>
+                        </li>
+                    `;
+                });
+            } catch(e) {}
+        }
+
+        function downloadReport() {
+            window.location.href = '/api/report';
+        }
+
+        // Init
+        checkAuth();
+    </script>
+</body>
+</html>

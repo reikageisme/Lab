@@ -1,0 +1,17 @@
+{
+  "name": "lab-dashboard",
+  "version": "1.0.0",
+  "description": "Pentest Lab Dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "dockerode": "^4.0.2",
+    "express": "^4.19.2",
+    "express-rate-limit": "^8.6.2",
+    "jsonwebtoken": "^9.0.3",
+    "pdfkit": "^0.19.1"
+  }
+}
