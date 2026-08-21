@@ -76,7 +76,7 @@ const requireAuth = (req, res, next) => {
 // --- AUTH ENDPOINTS ---
 const loginLimiter = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minute
-    max: 5,
+    max: 50,
     message: { error: 'Too many login attempts, please try again later.' }
 });
 
