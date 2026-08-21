@@ -635,24 +635,24 @@
                         <button onclick="submitFlag('${c.id}')" id="submit-btn-${c.id}" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg transition whitespace-nowrap">Submit</button>
                       </div>`;
 
-                return \`
-                    <div id="challenge-card-\${c.id}" class="\${style.bg} \${style.border} border rounded-xl p-5 relative overflow-hidden transition-all duration-300 \${solvedClass}">
-                        \${solvedBadge}
+                return `
+                    <div id="challenge-card-${c.id}" class="${style.bg} ${style.border} border rounded-xl p-5 relative overflow-hidden transition-all duration-300 ${solvedClass}">
+                        ${solvedBadge}
                         <div class="flex items-center gap-2 mb-2">
-                            <span class="text-lg">\${style.icon}</span>
-                            <h3 class="text-sm font-bold text-white flex-1">\${c.title}</h3>
-                            <span class="text-xs font-black bg-gradient-to-r \${style.gradient} text-white px-2 py-0.5 rounded-full">\${c.points} pts</span>
+                            <span class="text-lg">${style.icon}</span>
+                            <h3 class="text-sm font-bold text-white flex-1">${c.title}</h3>
+                            <span class="text-xs font-black bg-gradient-to-r ${style.gradient} text-white px-2 py-0.5 rounded-full">${c.points} pts</span>
                         </div>
                         <div class="flex gap-1 mb-3">
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded border \${diffColor}">\${c.difficulty}</span>
-                            \${c.tags.map(t => '<span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-500 border border-slate-700">' + t + '</span>').join('')}
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded border ${diffColor}">${c.difficulty}</span>
+                            ${c.tags.map(t => '<span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-500 border border-slate-700">' + t + '</span>').join('')}
                         </div>
-                        <p class="text-xs text-slate-300 mb-3 leading-relaxed">\${c.description}</p>
-                        <div class="space-y-1">\${hintsHtml}</div>
-                        \${flagInput}
-                        <div id="flag-feedback-\${c.id}" class="mt-2 text-xs text-center hidden"></div>
+                        <p class="text-xs text-slate-300 mb-3 leading-relaxed">${c.description}</p>
+                        <div class="space-y-1">${hintsHtml}</div>
+                        ${flagInput}
+                        <div id="flag-feedback-${c.id}" class="mt-2 text-xs text-center hidden"></div>
                     </div>
-                \`;
+                `;
             }).join('');
         }
 
