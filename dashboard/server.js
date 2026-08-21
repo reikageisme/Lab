@@ -86,7 +86,7 @@ const ctfSubmitLimiter = rateLimit({
     message: { error: 'Too many flag submissions. Please wait before trying again.' }
 });
 
-app.post('/api/login', loginLimiter, (req, res) => {
+app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
     if (username === ADMIN_USER && password === ADMIN_PASS) {
         const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '24h' });

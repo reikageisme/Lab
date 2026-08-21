@@ -261,7 +261,7 @@
         }
 
         // Global fetch interceptor for auth
-        const originalFetch = window.fetch;
+        const originalFetch = window.fetch.bind(window);
         window.fetch = async function(resource, config = {}) {
             if (!config.headers) config.headers = {};
             const token = localStorage.getItem('token');
