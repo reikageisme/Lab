@@ -63,7 +63,7 @@ function logActivity(action, details) {
 
 // --- AUTHENTICATION MIDDLEWARE ---
 const requireAuth = (req, res, next) => {
-    const token = req.cookies.token;
+    const token = req.cookies.token || (req.headers.authorization && req.headers.authorization.split(' ')[1]);
     if (!token) return res.status(401).json({ error: 'Unauthorized. Please login.' });
     try {
         jwt.verify(token, JWT_SECRET);
@@ -92,7 +92,7 @@ app.post('/api/login', loginLimiter, (req, res) => {
         const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '24h' });
         res.cookie('token', token, { httpOnly: true, maxAge: 24*60*60*1000 });
         logActivity('LOGIN', `User ${username} logged in`);
-        return res.json({ success: true });
+        return res.json({ success: true, token });
     }
     res.status(401).json({ error: 'Invalid credentials' });
 });

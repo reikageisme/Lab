@@ -260,6 +260,17 @@
             stopStatsPolling();
         }
 
+        // Global fetch interceptor for auth
+        const originalFetch = window.fetch;
+        window.fetch = async function(resource, config = {}) {
+            if (!config.headers) config.headers = {};
+            const token = localStorage.getItem('token');
+            if (token && !config.headers['Authorization']) {
+                config.headers['Authorization'] = `Bearer ${token}`;
+            }
+            return originalFetch(resource, config);
+        };
+
         async function handleLogin(e) {
             e.preventDefault();
             const u = document.getElementById('username').value;
@@ -271,6 +282,10 @@
                     body: JSON.stringify({username: u, password: p})
                 });
                 if (res.ok) {
+                    const data = await res.json();
+                    if (data.token) {
+                        localStorage.setItem('token', data.token);
+                    }
                     checkAuth();
                 } else {
                     document.getElementById('login-error').classList.remove('hidden');
@@ -281,6 +296,7 @@
         }
 
         async function handleLogout() {
+            localStorage.removeItem('token');
             await fetch('/api/logout', { method: 'POST' });
             checkAuth();
         }
