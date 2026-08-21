@@ -680,10 +680,10 @@
         async function submitFlag(challengeId) {
             if (ctfCooldown) return;
             
-            const input = document.getElementById(\`flag-input-\${challengeId}\`);
-            const btn = document.getElementById(\`submit-btn-\${challengeId}\`);
-            const feedback = document.getElementById(\`flag-feedback-\${challengeId}\`);
-            const card = document.getElementById(\`challenge-card-\${challengeId}\`);
+            const input = document.getElementById(`flag-input-${challengeId}`);
+            const btn = document.getElementById(`submit-btn-${challengeId}`);
+            const feedback = document.getElementById(`flag-feedback-${challengeId}`);
+            const card = document.getElementById(`challenge-card-${challengeId}`);
             const flag = input?.value?.trim();
             
             if (!flag) {
@@ -707,7 +707,7 @@
                 
                 if (data.correct && !data.alreadySolved) {
                     feedback.className = 'mt-2 text-xs text-center text-emerald-400 font-bold';
-                    feedback.textContent = \`🎉 \${data.message}\`;
+                    feedback.textContent = `🎉 ${data.message}`;
                     card.classList.add('glow-success');
                     launchConfetti();
                     setTimeout(() => {
