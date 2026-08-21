@@ -90,7 +90,7 @@ app.post('/api/login', loginLimiter, (req, res) => {
     const { username, password } = req.body;
     if (username === ADMIN_USER && password === ADMIN_PASS) {
         const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '24h' });
-        res.cookie('token', token, { httpOnly: true, sameSite: 'strict', maxAge: 24*60*60*1000 });
+        res.cookie('token', token, { httpOnly: true, maxAge: 24*60*60*1000 });
         logActivity('LOGIN', `User ${username} logged in`);
         return res.json({ success: true });
     }
