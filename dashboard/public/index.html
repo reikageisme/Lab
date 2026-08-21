@@ -35,6 +35,36 @@
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #1e293b; }
         ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+
+        /* CTF Animations */
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+            20%, 40%, 60%, 80% { transform: translateX(4px); }
+        }
+        @keyframes glow-green {
+            0%, 100% { box-shadow: 0 0 5px #10b981; }
+            50% { box-shadow: 0 0 20px #10b981, 0 0 40px #10b981; }
+        }
+        @keyframes glow-red {
+            0%, 100% { box-shadow: 0 0 5px #ef4444; }
+            50% { box-shadow: 0 0 20px #ef4444; }
+        }
+        .shake { animation: shake 0.5s ease-in-out; }
+        .glow-success { animation: glow-green 1s ease-in-out 3; }
+        .glow-fail { animation: glow-red 0.5s ease-in-out 2; }
+        .confetti-piece {
+            position: fixed;
+            top: -10px;
+            width: 10px;
+            height: 10px;
+            z-index: 9999;
+            animation: confetti-fall 3s ease-in forwards;
+        }
     </style>
 </head>
 <body class="bg-dark text-slate-200 min-h-screen font-sans antialiased">
@@ -79,6 +109,7 @@
             <button onclick="switchTab('modules')" id="tab-modules" class="px-4 py-3 border-b-2 border-blue-500 text-blue-400 font-medium">Lab Modules</button>
             <button onclick="switchTab('monitoring')" id="tab-monitoring" class="px-4 py-3 border-b-2 border-transparent text-slate-400 hover:text-slate-200 font-medium">Monitoring</button>
             <button onclick="switchTab('history')" id="tab-history" class="px-4 py-3 border-b-2 border-transparent text-slate-400 hover:text-slate-200 font-medium">History</button>
+            <button onclick="switchTab('ctf')" id="tab-ctf" class="px-4 py-3 border-b-2 border-transparent text-slate-400 hover:text-slate-200 font-medium flex items-center gap-2">🏁 CTF Challenges</button>
         </div>
 
         <!-- MAIN VIEW AREA -->
@@ -133,6 +164,53 @@
                             <li class="px-6 py-4 text-slate-500 text-center">Loading history...</li>
                         </ul>
                     </div>
+                </div>
+            </div>
+
+            <!-- CTF CHALLENGES TAB -->
+            <div id="view-ctf" class="hidden max-w-7xl mx-auto">
+                <!-- CTF Stats Bar -->
+                <div class="bg-gradient-to-r from-purple-900/40 to-blue-900/40 rounded-xl border border-purple-700/30 p-5 mb-6">
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex items-center gap-6">
+                            <div>
+                                <div class="text-xs text-purple-300 uppercase tracking-wider font-bold">Score</div>
+                                <div id="ctf-total-points" class="text-3xl font-black text-white">0</div>
+                            </div>
+                            <div class="h-10 w-px bg-purple-700/50"></div>
+                            <div>
+                                <div class="text-xs text-purple-300 uppercase tracking-wider font-bold">Solved</div>
+                                <div id="ctf-solved-count" class="text-3xl font-black text-white">0<span id="ctf-total-challenges" class="text-lg text-purple-400">/0</span></div>
+                            </div>
+                            <div class="h-10 w-px bg-purple-700/50"></div>
+                            <div class="flex-1 min-w-[200px]">
+                                <div class="flex justify-between text-xs text-purple-300 mb-1">
+                                    <span>Progress</span>
+                                    <span id="ctf-percent">0%</span>
+                                </div>
+                                <div class="w-full bg-purple-900/50 rounded-full h-3 overflow-hidden">
+                                    <div id="ctf-progress-bar" class="bg-gradient-to-r from-purple-500 to-cyan-500 h-3 rounded-full transition-all duration-700 ease-out" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="resetCTFProgress()" class="px-3 py-1.5 bg-slate-800 hover:bg-rose-900/50 text-slate-400 hover:text-rose-300 rounded-lg text-xs transition border border-slate-700 hover:border-rose-700">Reset Progress</button>
+                    </div>
+                </div>
+
+                <!-- CTF Category Filters -->
+                <div class="flex flex-wrap gap-2 mb-6">
+                    <button onclick="filterCTF('all')" id="ctf-filter-all" class="ctf-filter-btn px-4 py-2 rounded-lg text-xs font-bold transition bg-purple-600 text-white">All</button>
+                    <button onclick="filterCTF('Web')" id="ctf-filter-Web" class="ctf-filter-btn px-4 py-2 rounded-lg text-xs font-bold transition bg-slate-800 text-slate-400 hover:text-white border border-slate-700">🌐 Web</button>
+                    <button onclick="filterCTF('API')" id="ctf-filter-API" class="ctf-filter-btn px-4 py-2 rounded-lg text-xs font-bold transition bg-slate-800 text-slate-400 hover:text-white border border-slate-700">🔌 API</button>
+                    <button onclick="filterCTF('Cloud')" id="ctf-filter-Cloud" class="ctf-filter-btn px-4 py-2 rounded-lg text-xs font-bold transition bg-slate-800 text-slate-400 hover:text-white border border-slate-700">☁️ Cloud</button>
+                    <button onclick="filterCTF('Network')" id="ctf-filter-Network" class="ctf-filter-btn px-4 py-2 rounded-lg text-xs font-bold transition bg-slate-800 text-slate-400 hover:text-white border border-slate-700">🔗 Network</button>
+                    <button onclick="filterCTF('WAF')" id="ctf-filter-WAF" class="ctf-filter-btn px-4 py-2 rounded-lg text-xs font-bold transition bg-slate-800 text-slate-400 hover:text-white border border-slate-700">🛡️ WAF</button>
+                    <button onclick="filterCTF('Misc')" id="ctf-filter-Misc" class="ctf-filter-btn px-4 py-2 rounded-lg text-xs font-bold transition bg-slate-800 text-slate-400 hover:text-white border border-slate-700">🎯 Misc</button>
+                </div>
+
+                <!-- Challenge Grid -->
+                <div id="ctf-grid" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <div class="col-span-full text-center text-slate-500 py-12">Loading challenges...</div>
                 </div>
             </div>
 
@@ -209,7 +287,7 @@
 
         // --- TABS ---
         function switchTab(tab) {
-            ['modules', 'monitoring', 'history'].forEach(t => {
+            ['modules', 'monitoring', 'history', 'ctf'].forEach(t => {
                 document.getElementById(`view-${t}`).classList.add('hidden');
                 document.getElementById(`tab-${t}`).classList.remove('border-blue-500', 'text-blue-400');
                 document.getElementById(`tab-${t}`).classList.add('border-transparent', 'text-slate-400');
@@ -219,6 +297,7 @@
             document.getElementById(`tab-${tab}`).classList.remove('border-transparent', 'text-slate-400');
 
             if (tab === 'history') fetchHistory();
+            if (tab === 'ctf') fetchCTFChallenges();
         }
 
         // --- LAB MODULES ---
@@ -459,6 +538,240 @@
 
         function downloadReport() {
             window.location.href = '/api/report';
+        }
+
+        // --- CTF SYSTEM ---
+        let allChallenges = [];
+        let ctfFilter = 'all';
+        let ctfCooldown = false;
+
+        async function fetchCTFChallenges() {
+            try {
+                const res = await fetch('/api/ctf/challenges');
+                if (res.status === 401) return checkAuth();
+                allChallenges = await res.json();
+                renderCTFChallenges();
+                updateCTFStats();
+            } catch (err) {
+                console.error('Failed to fetch challenges:', err);
+            }
+        }
+
+        function getCTFCategoryStyle(cat) {
+            const styles = {
+                'Web': { gradient: 'from-blue-600 to-cyan-600', bg: 'bg-blue-900/20', border: 'border-blue-700/40', icon: '🌐' },
+                'API': { gradient: 'from-purple-600 to-pink-600', bg: 'bg-purple-900/20', border: 'border-purple-700/40', icon: '🔌' },
+                'Cloud': { gradient: 'from-orange-600 to-yellow-600', bg: 'bg-orange-900/20', border: 'border-orange-700/40', icon: '☁️' },
+                'Network': { gradient: 'from-green-600 to-emerald-600', bg: 'bg-green-900/20', border: 'border-green-700/40', icon: '🔗' },
+                'WAF': { gradient: 'from-red-600 to-rose-600', bg: 'bg-red-900/20', border: 'border-red-700/40', icon: '🛡️' },
+                'Misc': { gradient: 'from-teal-600 to-cyan-600', bg: 'bg-teal-900/20', border: 'border-teal-700/40', icon: '🎯' }
+            };
+            return styles[cat] || { gradient: 'from-slate-600 to-slate-700', bg: 'bg-slate-900/20', border: 'border-slate-700/40', icon: '📦' };
+        }
+
+        function filterCTF(category) {
+            ctfFilter = category;
+            document.querySelectorAll('.ctf-filter-btn').forEach(btn => {
+                btn.classList.remove('bg-purple-600', 'text-white');
+                btn.classList.add('bg-slate-800', 'text-slate-400');
+            });
+            const activeBtn = document.getElementById(`ctf-filter-${category}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-slate-800', 'text-slate-400');
+                activeBtn.classList.add('bg-purple-600', 'text-white');
+            }
+            renderCTFChallenges();
+        }
+
+        function renderCTFChallenges() {
+            const grid = document.getElementById('ctf-grid');
+            let filtered = allChallenges;
+            if (ctfFilter !== 'all') {
+                filtered = allChallenges.filter(c => c.category === ctfFilter);
+            }
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '<div class="col-span-full text-center text-slate-500 py-12">No challenges in this category.</div>';
+                return;
+            }
+
+            grid.innerHTML = filtered.map(c => {
+                const style = getCTFCategoryStyle(c.category);
+                const diffColor = c.difficulty === 'Easy' ? 'text-emerald-400 bg-emerald-900/40 border-emerald-700' 
+                                : c.difficulty === 'Medium' ? 'text-amber-400 bg-amber-900/40 border-amber-700' 
+                                : 'text-rose-400 bg-rose-900/40 border-rose-700';
+                const solvedClass = c.solved ? 'ring-2 ring-emerald-500/50' : '';
+                const solvedBadge = c.solved ? '<div class="absolute top-3 right-3"><span class="text-xs font-bold bg-emerald-600 text-white px-2 py-1 rounded-full">✓ SOLVED</span></div>' : '';
+                
+                const hintsHtml = c.hints.map((h, i) => {
+                    if (h.unlocked) {
+                        return `<div class="text-xs text-amber-300 bg-amber-900/30 border border-amber-700/30 rounded px-3 py-2 mt-1">💡 ${h.text}</div>`;
+                    } else {
+                        const costLabel = h.cost > 0 ? `(-${h.cost} pts)` : '(Free)';
+                        return `<button onclick="unlockHint('${c.id}', ${i})" class="text-xs text-slate-400 hover:text-amber-400 bg-slate-800 hover:bg-amber-900/20 border border-slate-700 hover:border-amber-700/50 rounded px-3 py-2 mt-1 transition w-full text-left">🔒 Hint ${i + 1} ${costLabel}</button>`;
+                    }
+                }).join('');
+
+                const flagInput = c.solved 
+                    ? `<div class="mt-3 text-xs text-emerald-400 bg-emerald-900/20 border border-emerald-700/30 rounded-lg px-3 py-2 text-center font-medium">🎉 Solved${c.solvedAt ? ' on ' + new Date(c.solvedAt).toLocaleDateString() : ''}</div>`
+                    : `<div class="mt-3 flex gap-2">
+                        <input type="text" id="flag-input-${c.id}" placeholder="FLAG{...}" class="flex-1 bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-purple-500 transition" onkeydown="if(event.key==='Enter')submitFlag('${c.id}')">
+                        <button onclick="submitFlag('${c.id}')" id="submit-btn-${c.id}" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg transition whitespace-nowrap">Submit</button>
+                      </div>`;
+
+                return \`
+                    <div id="challenge-card-\${c.id}" class="\${style.bg} \${style.border} border rounded-xl p-5 relative overflow-hidden transition-all duration-300 \${solvedClass}">
+                        \${solvedBadge}
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-lg">\${style.icon}</span>
+                            <h3 class="text-sm font-bold text-white flex-1">\${c.title}</h3>
+                            <span class="text-xs font-black bg-gradient-to-r \${style.gradient} text-white px-2 py-0.5 rounded-full">\${c.points} pts</span>
+                        </div>
+                        <div class="flex gap-1 mb-3">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded border \${diffColor}">\${c.difficulty}</span>
+                            \${c.tags.map(t => '<span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-500 border border-slate-700">' + t + '</span>').join('')}
+                        </div>
+                        <p class="text-xs text-slate-300 mb-3 leading-relaxed">\${c.description}</p>
+                        <div class="space-y-1">\${hintsHtml}</div>
+                        \${flagInput}
+                        <div id="flag-feedback-\${c.id}" class="mt-2 text-xs text-center hidden"></div>
+                    </div>
+                \`;
+            }).join('');
+        }
+
+        function updateCTFStats() {
+            const solved = allChallenges.filter(c => c.solved).length;
+            const total = allChallenges.length;
+            const points = allChallenges.reduce((sum, c) => {
+                if (c.solved) {
+                    // We don't have pointsEarned in the challenge list, so use the challenge points
+                    return sum;
+                }
+                return sum;
+            }, 0);
+            
+            // Fetch actual progress for accurate points
+            fetch('/api/ctf/progress').then(r => r.json()).then(data => {
+                document.getElementById('ctf-total-points').textContent = data.totalPoints;
+                document.getElementById('ctf-solved-count').textContent = data.solvedCount;
+                document.getElementById('ctf-total-challenges').textContent = '/' + data.totalChallenges;
+                document.getElementById('ctf-percent').textContent = data.percentComplete + '%';
+                document.getElementById('ctf-progress-bar').style.width = data.percentComplete + '%';
+            }).catch(() => {});
+        }
+
+        async function submitFlag(challengeId) {
+            if (ctfCooldown) return;
+            
+            const input = document.getElementById(\`flag-input-\${challengeId}\`);
+            const btn = document.getElementById(\`submit-btn-\${challengeId}\`);
+            const feedback = document.getElementById(\`flag-feedback-\${challengeId}\`);
+            const card = document.getElementById(\`challenge-card-\${challengeId}\`);
+            const flag = input?.value?.trim();
+            
+            if (!flag) {
+                input.classList.add('shake');
+                setTimeout(() => input.classList.remove('shake'), 500);
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = '...';
+            
+            try {
+                const res = await fetch('/api/ctf/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ challengeId, flag })
+                });
+                const data = await res.json();
+                
+                feedback.classList.remove('hidden');
+                
+                if (data.correct && !data.alreadySolved) {
+                    feedback.className = 'mt-2 text-xs text-center text-emerald-400 font-bold';
+                    feedback.textContent = \`🎉 \${data.message}\`;
+                    card.classList.add('glow-success');
+                    launchConfetti();
+                    setTimeout(() => {
+                        fetchCTFChallenges();
+                    }, 2000);
+                } else if (data.correct && data.alreadySolved) {
+                    feedback.className = 'mt-2 text-xs text-center text-blue-400';
+                    feedback.textContent = '✅ ' + data.message;
+                } else {
+                    feedback.className = 'mt-2 text-xs text-center text-rose-400 font-bold';
+                    feedback.textContent = '❌ ' + data.message;
+                    card.classList.add('shake', 'glow-fail');
+                    setTimeout(() => card.classList.remove('shake', 'glow-fail'), 1000);
+                    
+                    // Cooldown
+                    ctfCooldown = true;
+                    btn.textContent = '5s';
+                    let count = 5;
+                    const cd = setInterval(() => {
+                        count--;
+                        btn.textContent = count + 's';
+                        if (count <= 0) {
+                            clearInterval(cd);
+                            ctfCooldown = false;
+                            btn.textContent = 'Submit';
+                            btn.disabled = false;
+                        }
+                    }, 1000);
+                    return;
+                }
+            } catch (err) {
+                feedback.classList.remove('hidden');
+                feedback.className = 'mt-2 text-xs text-center text-rose-400';
+                feedback.textContent = 'Submission failed. Please try again.';
+            }
+            
+            btn.disabled = false;
+            btn.textContent = 'Submit';
+        }
+
+        async function unlockHint(challengeId, hintIndex) {
+            try {
+                const res = await fetch('/api/ctf/hints', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ challengeId, hintIndex })
+                });
+                if (res.ok) {
+                    fetchCTFChallenges();
+                }
+            } catch (err) {
+                alert('Failed to unlock hint');
+            }
+        }
+
+        function launchConfetti() {
+            const colors = ['#a855f7', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
+            for (let i = 0; i < 50; i++) {
+                const piece = document.createElement('div');
+                piece.className = 'confetti-piece';
+                piece.style.left = Math.random() * 100 + 'vw';
+                piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                piece.style.width = (Math.random() * 8 + 5) + 'px';
+                piece.style.height = (Math.random() * 8 + 5) + 'px';
+                piece.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                piece.style.animationDelay = (Math.random() * 0.5) + 's';
+                document.body.appendChild(piece);
+                setTimeout(() => piece.remove(), 4000);
+            }
+        }
+
+        async function resetCTFProgress() {
+            if (!confirm('Are you sure you want to reset ALL CTF progress? This cannot be undone!')) return;
+            try {
+                await fetch('/api/ctf/reset', { method: 'POST' });
+                fetchCTFChallenges();
+            } catch (err) {
+                alert('Failed to reset progress');
+            }
         }
 
         // Init

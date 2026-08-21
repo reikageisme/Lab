@@ -45,10 +45,42 @@ app.get('/latest/meta-data/', (req, res) => {
             "security-credentials": {
                 "s3-access-role": {
                     "AccessKeyId": "AKIAIOSFODNN7EXAMPLE",
-                    "SecretAccessKey": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+                    "SecretAccessKey": "FLAG{ssrf_m3tadata_3xtr4ct3d}",
                     "Token": "mock-session-token"
                 }
             }
+        }
+    });
+});
+
+// Hidden internal admin panel (for CTF ssrf-002)
+app.get('/internal/admin', (req, res) => {
+    res.json({
+        admin_panel: true,
+        message: 'Internal Admin Panel - Authorized Personnel Only',
+        secret: 'FLAG{ssrf_1nt3rnal_s3rv1c3_d1sc0v3ry}',
+        users: [
+            { id: 1, username: 'admin', role: 'superadmin' },
+            { id: 2, username: 'dev', role: 'developer' }
+        ]
+    });
+});
+
+// Debug config endpoint (for CTF ssrf-003)
+app.get('/debug/config', (req, res) => {
+    res.json({
+        app: 'ssrf-lab',
+        version: '1.0.0',
+        debug: true,
+        database: {
+            host: 'internal-db.lab.local',
+            port: 5432,
+            username: 'app_user',
+            password: 'FLAG{ssrf_d3bug_c0nf1g_l34k}'
+        },
+        api_keys: {
+            stripe: 'sk_live_FAKE_KEY_FOR_CTF',
+            sendgrid: 'SG.FAKE_KEY_FOR_CTF'
         }
     });
 });

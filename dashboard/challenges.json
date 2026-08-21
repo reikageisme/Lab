@@ -1,0 +1,229 @@
+{
+  "challenges": [
+    {
+      "id": "ssrf-001",
+      "title": "Cloud Metadata Heist",
+      "category": "Cloud",
+      "difficulty": "Easy",
+      "points": 100,
+      "description": "The SSRF-Cloud app has a URL fetcher that lets you request any URL. Cloud instances often have a metadata service running at a well-known IP address. Can you use the URL fetcher to steal the cloud credentials?",
+      "hints": [
+        {"text": "AWS metadata service runs at IP 169.254.169.254", "cost": 0},
+        {"text": "Try fetching http://ssrf-lab:3000/latest/meta-data/ through the URL fetcher", "cost": 25}
+      ],
+      "flag": "FLAG{ssrf_m3tadata_3xtr4ct3d}",
+      "linkedModule": "lab_ssrf",
+      "tags": ["ssrf", "cloud", "aws", "metadata"]
+    },
+    {
+      "id": "ssrf-002",
+      "title": "Internal Service Discovery",
+      "category": "Cloud",
+      "difficulty": "Medium",
+      "points": 200,
+      "description": "Beyond the metadata endpoint, there are other internal services running on the SSRF-Cloud server. Can you discover the hidden admin panel that's only accessible internally?",
+      "hints": [
+        {"text": "Internal services often run on the same host", "cost": 0},
+        {"text": "Try accessing http://ssrf-lab:3000/internal/admin through the fetcher", "cost": 50}
+      ],
+      "flag": "FLAG{ssrf_1nt3rnal_s3rv1c3_d1sc0v3ry}",
+      "linkedModule": "lab_ssrf",
+      "tags": ["ssrf", "internal", "recon"]
+    },
+    {
+      "id": "ssrf-003",
+      "title": "Debug Config Leak",
+      "category": "Cloud",
+      "difficulty": "Hard",
+      "points": 300,
+      "description": "Developers sometimes leave debug endpoints exposed on internal networks. The SSRF-Cloud server might have a debug configuration endpoint leaking sensitive information. Can you find it?",
+      "hints": [
+        {"text": "Debug endpoints often use paths like /debug, /config, or /debug/config", "cost": 0},
+        {"text": "Fetch http://ssrf-lab:3000/debug/config through the URL fetcher", "cost": 75}
+      ],
+      "flag": "FLAG{ssrf_d3bug_c0nf1g_l34k}",
+      "linkedModule": "lab_ssrf",
+      "tags": ["ssrf", "debug", "config", "information-disclosure"]
+    },
+    {
+      "id": "web-001",
+      "title": "Juice Shop — Admin Login",
+      "category": "Web",
+      "difficulty": "Easy",
+      "points": 100,
+      "description": "OWASP Juice Shop has an admin account. Can you find the admin's email and log into their account? The login form might be vulnerable to a classic attack.",
+      "hints": [
+        {"text": "SQL Injection is a common vulnerability in login forms", "cost": 0},
+        {"text": "Try using ' OR 1=1-- as the email with any password", "cost": 25}
+      ],
+      "flag": "FLAG{ju1c3_sh0p_4dm1n_pwn3d}",
+      "linkedModule": "lab_juice_shop",
+      "tags": ["sqli", "authentication", "juice-shop"]
+    },
+    {
+      "id": "web-002",
+      "title": "Juice Shop — XSS Alert",
+      "category": "Web",
+      "difficulty": "Medium",
+      "points": 150,
+      "description": "Cross-Site Scripting (XSS) allows attackers to inject malicious scripts. Find a reflected XSS vulnerability in Juice Shop and trigger an alert box.",
+      "hints": [
+        {"text": "Search functionality often reflects user input without sanitization", "cost": 0},
+        {"text": "Try injecting <iframe src='javascript:alert(`xss`)'> in the search bar", "cost": 40}
+      ],
+      "flag": "FLAG{ju1c3_sh0p_xss_r3fl3ct3d}",
+      "linkedModule": "lab_juice_shop",
+      "tags": ["xss", "reflected", "juice-shop"]
+    },
+    {
+      "id": "web-003",
+      "title": "DVWA — SQL Injection Basics",
+      "category": "Web",
+      "difficulty": "Easy",
+      "points": 100,
+      "description": "DVWA has a SQL Injection exercise on the Low security level. Extract the password hash for the admin user from the database.",
+      "hints": [
+        {"text": "Set DVWA Security to Low, then go to SQL Injection page", "cost": 0},
+        {"text": "Try: ' UNION SELECT user, password FROM users--", "cost": 25}
+      ],
+      "flag": "FLAG{dvwa_sql1_b4s1cs_m4st3r3d}",
+      "linkedModule": "lab_dvwa",
+      "tags": ["sqli", "union", "dvwa"]
+    },
+    {
+      "id": "web-004",
+      "title": "DVWA — File Upload Shell",
+      "category": "Web",
+      "difficulty": "Medium",
+      "points": 200,
+      "description": "DVWA's File Upload feature on Low security doesn't properly validate uploads. Can you upload a PHP web shell and execute commands on the server?",
+      "hints": [
+        {"text": "Create a PHP file with <?php system($_GET['cmd']); ?>", "cost": 0},
+        {"text": "After upload, access the file at /hackable/uploads/your-file.php?cmd=whoami", "cost": 50}
+      ],
+      "flag": "FLAG{dvwa_f1l3_upl04d_sh3ll}",
+      "linkedModule": "lab_dvwa",
+      "tags": ["file-upload", "rce", "dvwa"]
+    },
+    {
+      "id": "web-005",
+      "title": "WebGoat — Authentication Bypass",
+      "category": "Web",
+      "difficulty": "Hard",
+      "points": 300,
+      "description": "WebGoat teaches various authentication vulnerabilities. Complete the Authentication Bypass lesson where you need to verify your identity using security questions — but with a twist.",
+      "hints": [
+        {"text": "Intercept the request with a proxy like Burp Suite", "cost": 0},
+        {"text": "Try modifying the security question parameters — change secQuestion0 and secQuestion1 parameter names", "cost": 75}
+      ],
+      "flag": "FLAG{w3bg04t_4uth_byp4ss3d}",
+      "linkedModule": "lab_webgoat",
+      "tags": ["authentication", "bypass", "webgoat"]
+    },
+    {
+      "id": "api-001",
+      "title": "VAmPI — IDOR Attack",
+      "category": "API",
+      "difficulty": "Medium",
+      "points": 200,
+      "description": "VAmPI has an Insecure Direct Object Reference (IDOR) vulnerability. Can you access another user's data by manipulating API parameters?",
+      "hints": [
+        {"text": "Register a user, then try accessing other users' endpoints", "cost": 0},
+        {"text": "Try GET /users/v1/admin with your auth token", "cost": 50}
+      ],
+      "flag": "FLAG{v4mp1_1d0r_4cc3ss_gr4nt3d}",
+      "linkedModule": "lab_vampi",
+      "tags": ["idor", "api", "broken-access-control"]
+    },
+    {
+      "id": "api-002",
+      "title": "VAmPI — Mass Assignment",
+      "category": "API",
+      "difficulty": "Hard",
+      "points": 300,
+      "description": "VAmPI's user update endpoint doesn't properly filter input parameters. Can you escalate your privileges by sending extra fields in the update request?",
+      "hints": [
+        {"text": "Mass Assignment means the API accepts more fields than intended", "cost": 0},
+        {"text": "Try adding 'admin': true to your PUT /users/v1/update request body", "cost": 75}
+      ],
+      "flag": "FLAG{v4mp1_m4ss_4ss1gnm3nt_pwn}",
+      "linkedModule": "lab_vampi",
+      "tags": ["mass-assignment", "privilege-escalation", "api"]
+    },
+    {
+      "id": "api-003",
+      "title": "Rate Limit Bypass",
+      "category": "API",
+      "difficulty": "Medium",
+      "points": 200,
+      "description": "The Target-App has rate limiting enabled (50 req/min). But rate limiting implementations can sometimes be bypassed. Can you find a way to make unlimited requests?",
+      "hints": [
+        {"text": "Rate limiters often track by IP address — what if you can change how the server sees your IP?", "cost": 0},
+        {"text": "Try adding X-Forwarded-For header with a different IP to each request", "cost": 50}
+      ],
+      "flag": "FLAG{r4t3_l1m1t_byp4ss3d}",
+      "linkedModule": "lab_target_app",
+      "tags": ["rate-limit", "bypass", "headers"]
+    },
+    {
+      "id": "api-004",
+      "title": "Hidden Admin Panel",
+      "category": "API",
+      "difficulty": "Easy",
+      "points": 100,
+      "description": "The Target-App has some admin endpoints for managing rate limits. But there might be other hidden admin endpoints that the developers forgot to remove. Can you find the secret one?",
+      "hints": [
+        {"text": "Try directory brute-forcing paths under /admin/", "cost": 0},
+        {"text": "Common hidden paths: /admin/secret, /admin/flag, /admin/secret-flag", "cost": 25}
+      ],
+      "flag": "FLAG{h1dd3n_4dm1n_p4n3l_f0und}",
+      "linkedModule": "lab_target_app",
+      "tags": ["recon", "directory-brute-force", "information-disclosure"]
+    },
+    {
+      "id": "net-001",
+      "title": "Service Enumeration",
+      "category": "Network",
+      "difficulty": "Medium",
+      "points": 200,
+      "description": "Metasploitable2 is running many vulnerable services. Use nmap or similar tools to enumerate all open ports and identify the services. What version of vsftpd is running?",
+      "hints": [
+        {"text": "Use: nmap -sV <target-ip> to detect service versions", "cost": 0},
+        {"text": "vsftpd runs on port 21 — the version contains a known backdoor", "cost": 50}
+      ],
+      "flag": "FLAG{m3t4spl01t4bl3_s3rv1c3_3num}",
+      "linkedModule": "lab_metasploitable2",
+      "tags": ["nmap", "enumeration", "recon", "network"]
+    },
+    {
+      "id": "waf-001",
+      "title": "WAF Bypass — SQL Injection",
+      "category": "WAF",
+      "difficulty": "Hard",
+      "points": 300,
+      "description": "ModSecurity WAF is protecting the Target-App. The WAF blocks common SQL injection patterns. Can you craft a payload that bypasses the WAF rules and reaches the backend?",
+      "hints": [
+        {"text": "WAFs often use pattern matching — try encoding or obfuscating your payload", "cost": 0},
+        {"text": "Try URL encoding, case variation, or comment injection: /*!UNION*/ /*!SELECT*/", "cost": 75}
+      ],
+      "flag": "FLAG{w4f_byp4ss_sql1_m4st3r}",
+      "linkedModule": "lab_waf",
+      "tags": ["waf", "bypass", "sqli", "modsecurity"]
+    },
+    {
+      "id": "misc-001",
+      "title": "Find the Easter Egg",
+      "category": "Misc",
+      "difficulty": "Easy",
+      "points": 50,
+      "description": "Every good CTF has an Easter egg. This dashboard might be hiding something in its source code or API responses. Can you find the hidden flag?",
+      "hints": [
+        {"text": "Developers sometimes leave comments in HTML source code", "cost": 0},
+        {"text": "Check the browser developer tools — Network tab, Response headers, or page source", "cost": 10}
+      ],
+      "flag": "FLAG{34st3r_3gg_hunt3r_pr0}",
+      "linkedModule": "lab_dashboard",
+      "tags": ["osint", "recon", "source-code"]
+    }
+  ]
+}

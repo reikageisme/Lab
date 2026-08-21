@@ -122,6 +122,36 @@ app.post('/checkout', async (req, res) => {
     res.json({ message: 'Checkout successful', orderId: Math.floor(Math.random() * 1000000) });
 });
 
+// --- CTF HIDDEN ENDPOINTS ---
+
+// Hidden admin flag (for CTF api-004)
+app.get('/admin/secret-flag', (req, res) => {
+    res.json({
+        message: 'Congratulations! You found the hidden admin endpoint!',
+        flag: 'FLAG{h1dd3n_4dm1n_p4n3l_f0und}',
+        hint: 'Not all admin endpoints are documented...'
+    });
+});
+
+// Rate limit bypass detection (for CTF api-003)
+app.get('/admin/rate-limit-bypass-test', (req, res) => {
+    const xForwardedFor = req.headers['x-forwarded-for'];
+    if (xForwardedFor) {
+        res.setHeader('X-CTF-Flag', 'FLAG{r4t3_l1m1t_byp4ss3d}');
+        res.json({
+            message: 'Rate limit bypass detected!',
+            flag: 'FLAG{r4t3_l1m1t_byp4ss3d}',
+            technique: 'X-Forwarded-For header spoofing',
+            your_spoofed_ip: xForwardedFor
+        });
+    } else {
+        res.json({
+            message: 'No bypass technique detected.',
+            hint: 'How can you make the server think you are a different IP?'
+        });
+    }
+});
+
 // Fallback for non-existent routes
 app.use((req, res) => {
     res.status(404).json({ error: 'Not found' });
