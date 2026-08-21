@@ -187,3 +187,14 @@ services:
     networks:
       - lab-network
     restart: unless-stopped
+
+  # ----------------------------------------------------
+  # CLOUDFLARE TUNNEL
+  # ----------------------------------------------------
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: lab_cloudflared
+    command: tunnel --no-autoupdate run --token eyJhIjoiZTJiOWZhNjhlMGFkYjM4Y2E3NTQ2ZjJmMzE0MzExZDAiLCJ0IjoiMTEyMDEzMDItNWNmMi00ZmViLTllMzYtNWQwNzI4NjM1MzFlIiwicyI6Ik1tWTBOV1JsTUdZdE4yVm1ZaTAwWkdGaExUZ3lORFV0TjJGaU5ESXhNMkl5TXpnMSJ9
+    networks:
+      - lab-network
+    restart: unless-stopped
